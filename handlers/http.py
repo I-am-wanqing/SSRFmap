@@ -24,13 +24,13 @@ class exploit(Handler):
             if self.socket._closed or not response:
                 break
 
-            logging.info(f"New session from : \033[32m{address[0]}\033[0m")
+            logging.info(f"新会话来自：\033[32m{address[0]}\033[0m")
             self.connected = True
 
             regex = re.compile("(.*) (.*) HTTP")
             request_method, request_action = regex.findall(response)[0]
             request_param = urllib.parse.urlsplit(request_action).query
-            logging.info(f"Possible injected param: \033[32m{request_param}\033[0m")
+            logging.info(f"疑似被注入的参数：\033[32m{request_param}\033[0m")
             self.injected_params.append(request_param)
 
             response_header = "HTTP/1.1 200 OK\n"
@@ -42,11 +42,11 @@ class exploit(Handler):
     def kill(self):
         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(
             self.socket.getsockname()
-        )  # trigger last connection to closing
+        )  # 触发最后一次连接以完成关闭
         self.socket.close()
 
     def listen_command(self):
-        # shutdown handler
+        # 关闭处理器
         if not self.socket._closed:
             self.kill()
         else:

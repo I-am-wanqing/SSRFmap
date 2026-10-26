@@ -1,7 +1,7 @@
 [project]
 name = "ssrfmap"
 version = "0.1.0"
-description = "Automatic SSRF fuzzer and exploitation tool"
+description = "SSRF 自动化模糊测试与利用工具"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

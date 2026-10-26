@@ -7,7 +7,7 @@ import time
 class Handler(threading.Thread):
     def __init__(self, port):
         threading.Thread.__init__(self)
-        logging.info(f"Handler listening on 0.0.0.0:{port}")
+        logging.info(f"Handler 正在监听 0.0.0.0:{port}")
         self.connected = False
         self.port = int(port)
 
@@ -18,7 +18,7 @@ class Handler(threading.Thread):
         while True:
             self.socket.listen(5)
             self.client, address = self.socket.accept()
-            print(f"Handler> New session from {address[0]}")
+            print(f"Handler> 新会话来自 {address[0]}")
             self.connected = True
 
             response = self.client.recv(255)
@@ -31,7 +31,7 @@ class Handler(threading.Thread):
             cmd = input("Shell> $ ")
             if cmd == "exit":
                 self.kill()
-                print("BYE !")
+                print("再见！")
                 exit()
                 self.send_command(cmd + "\n\n")
 

@@ -15,13 +15,13 @@ class SSRF(object):
 
     def __init__(self, args):
 
-        # Set working dir to access all libraries
+        # 设置工作目录，以便访问所有库
         self.change_current_dir()
 
-        # Load modules in memory
+        # 将模块加载到内存
         self.load_modules()
 
-        # Start a reverse shell handler
+        # 启动反弹 Shell 处理器
         if args.handler and args.lport and args.handler == "1":
             handler = Handler(args.lport)
             handler.start()
@@ -37,16 +37,16 @@ class SSRF(object):
                 "https": args.proxy,
             }
 
-        # Init a requester
+        # 初始化 Requester
         self.requester = Requester(args.reqfile, args.useragent, args.ssl, proxies)
 
-        # NOTE: if args.param == None, target everything
+        # 注意：若 args.param 为 None，则测试所有参数
         if args.param == None:
-            logging.warning("No parameter (-p) defined, nothing will be tested!")
+            logging.warning("未定义参数（-p），不会测试任何内容！")
 
-        # NOTE: if args.modules == None, try everything
+        # 注意：若 args.modules 为 None，则尝试所有模块
         if args.modules == None:
-            logging.warning("No modules (-m) defined, everything will be tested!")
+            logging.warning("未定义模块（-m），将测试所有模块！")
             for module in self.modules:
                 module.exploit(self.requester, args)
         else:
@@ -56,7 +56,7 @@ class SSRF(object):
                         module.exploit(self.requester, args)
                         break
 
-        # Handling a shell
+        # 处理 Shell 交互
         while args.handler:
             handler.listen_command()
             time.sleep(5)
@@ -74,7 +74,7 @@ class SSRF(object):
             location = os.path.join("./handlers", handler_file)
             self.handler = SourceFileLoader(handler_file, location).load_module()
         except Exception as e:
-            logging.error(f"Invalid no such handler: {name}")
+            logging.error(f"处理模块不存在或无效：{name}")
             exit(1)
 
     def change_current_dir(self):
@@ -83,6 +83,6 @@ class SSRF(object):
         except PermissionError:
             project_directory = Path(__file__).resolve().parent.parent
             logging.error(
-                "Error: access to directory %s denied. Verify execute permissions.",
+                "错误：无权访问目录 %s，请检查执行权限。",
                 project_directory,
             )

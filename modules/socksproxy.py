@@ -6,17 +6,17 @@ from urllib.request import urlopen
 
 from core.utils import *
 
-# NOTE
-# Due to the nature of SSRF vulnerabilities,
-# only one response is made from a request.
-# You can't get an interactive shell either..
+# 注意
+# 由于 SSRF 漏洞的特性，
+# 一次请求只能得到一次响应，
+# 也无法获得交互式 shell。
 
 # $ cat /etc/proxychains.conf
 # [ProxyList]
 # socks4  127.0.0.1 9000
 
 name = "socksproxy"
-description = "SOCKS Proxy  - Socks4"
+description = "SOCKS 代理 - Socks4"
 author = "Swissky"
 documentation = [
     "https://github.com/iamultra/ssrfsocks",
@@ -32,11 +32,11 @@ class exploit:
     TIMEOUT = 5
 
     def __init__(self, requester, args):
-        logging.info(f"Module '{name}' launched !")
+        logging.info(f"模块 '{name}' 已启动！")
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((self.HOST, self.PORT))
         server.listen(2)
-        logging.info(f"Listener ready on port {self.PORT}")
+        logging.info(f"监听器已在端口 {self.PORT} 就绪")
         try:
             while 1:
                 client, addr = server.accept()
@@ -76,9 +76,9 @@ class exploit:
         req = req.decode()
 
         if req[0] != "\x04":
-            raise Exception("bad version number")
+            raise Exception("错误的版本号")
         if req[1] != "\x01":
-            raise Exception("only tcp stream supported")
+            raise Exception("仅支持 TCP 流")
 
         port = req[2:4]
         host = req[4:8]
@@ -87,7 +87,7 @@ class exploit:
         else:
             byname = False
 
-        # NOTE: seems useless
+        # 注意：似乎没有用处
         userid = ""
         i = 8
         while req[i] != "\x00":

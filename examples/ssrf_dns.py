@@ -1,5 +1,5 @@
-# NOTE example script heavily inspired from FCSC CTF 2024
-# use this example to test the AXFR module
+# 注意：示例脚本，灵感来自 FCSC CTF 2024
+# 使用该示例来测试 AXFR 模块
 # dig @127.0.0.1 -p 53 example.lab AXFR
 
 import threading
@@ -43,7 +43,7 @@ class LocalDNS(BaseResolver):
 
 
 def run_server(protocol):
-    print(f"Server is running - {protocol}")
+    print(f"DNS 服务已启动 - {protocol}")
     resolver = LocalDNS()
     server = DNSServer(resolver, address="0.0.0.0", port=53, tcp=(protocol == "TCP"))
     server.start()

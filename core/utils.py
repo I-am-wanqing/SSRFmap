@@ -31,7 +31,7 @@ def wrapper_https(data, ip, port):
 
 
 def safe_loot_name(value):
-    """Return a filesystem-safe name without path separators."""
+    """返回不含路径分隔符的、文件系统安全的名称。"""
     safe_name = "".join(
         character if character.isalnum() or character in ".-_" else "_" for character in str(value)
     )
@@ -39,7 +39,7 @@ def safe_loot_name(value):
 
 
 def loot_path(host, filename):
-    """Create a target-specific loot directory and return a safe output path."""
+    """创建针对目标主机的 loot 目录并返回安全的输出路径。"""
     directory = Path("loot") / safe_loot_name(host)
     directory.mkdir(parents=True, exist_ok=True)
     return directory / safe_loot_name(filename)

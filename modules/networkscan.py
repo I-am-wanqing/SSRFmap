@@ -8,7 +8,7 @@ from datetime import datetime
 from core.utils import *
 
 name = "networkscan"
-description = "Scan the network - HTTP Ping sweep"
+description = "网络扫描 - HTTP Ping 扫描"
 author = "Swissky"
 documentation = []
 
@@ -17,15 +17,15 @@ class exploit:
     ips = set()
 
     def __init__(self, requester, args):
-        logging.info(f"Module '{name}' launched !")
+        logging.info(f"模块 '{name}' 已启动！")
 
-        # concurrent requests in order to limit the time
-        self.add_range("192.168.1.0/24")  # Default network
-        self.add_range("192.168.0.0/24")  # Default network
+        # 使用并发请求以缩短耗时
+        self.add_range("192.168.1.0/24")  # 默认网段
+        self.add_range("192.168.0.0/24")  # 默认网段
 
-        # Uncomment these lines if you need to scan more networks
-        # self.add_range("172.17.0.0/16")   # Docker network
-        # self.add_range("172.18.0.0/16")   # Docker network
+        # 如需扫描更多网段，取消以下注释
+        # self.add_range("172.17.0.0/16")   # Docker 网段
+        # self.add_range("172.18.0.0/16")   # Docker 网段
 
         r = requester.do_request(args.param, "")
         with concurrent.futures.ThreadPoolExecutor(max_workers=None) as executor:
@@ -38,11 +38,11 @@ class exploit:
         (ip, cidr) = ip_cidr.split("/")
         cidr = int(cidr)
         host_bits = 32 - cidr
-        i = struct.unpack(">I", socket.inet_aton(ip))[0]  # note the endianness
-        start = (i >> host_bits) << host_bits  # clear the host bits
+        i = struct.unpack(">I", socket.inet_aton(ip))[0]  # 注意字节序
+        start = (i >> host_bits) << host_bits  # 清零主机位
         end = start | ((1 << host_bits) - 1)
 
-        # excludes the first and last address in the subnet
+        # 排除子网中的第一个和最后一个地址
         for i in range(start, end):
             self.ips.add(socket.inet_ntoa(struct.pack(">I", i)))
 
@@ -53,7 +53,7 @@ class exploit:
 
             if (not "Connection refused" in r.text) and (r.text != compare.text):
                 timer = datetime.today().time().replace(microsecond=0)
-                print(f"\t[{timer}] Found host :{host + ' ' * 40}")
+                print(f"\t[{timer}] 发现主机 :{host + ' ' * 40}")
 
             timer = datetime.today().time().replace(microsecond=0)
         except Exception as e:

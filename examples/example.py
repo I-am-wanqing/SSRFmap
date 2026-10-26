@@ -1,5 +1,5 @@
-# NOTE: Do not try this at home - highly vulnerable ! (SSRF and RCE)
-# NOTE: SSRF examples script
+# 注意：请勿随意模仿 - 该示例存在高危漏洞！（SSRF 和 RCE）
+# 注意：SSRF 示例脚本
 # FLASK_APP=example.py flask run
 
 import re
@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello():
-    return "SSRF Example!"
+    return "SSRF 示例！"
 
 
 # curl -i -X POST -d 'url=http://example.com' http://localhost:5000/ssrf
@@ -69,8 +69,7 @@ def ssrf5():
 # curl -F 'url=http://example.com' -F 'proof=@README.md' http://127.0.0.1:5000/ssrf6
 @app.route("/ssrf6", methods=["POST"])
 def ssrf6():
-    # Deliberately vulnerable: this endpoint exists only to reproduce SSRF
-    # when the target URL is carried in a multipart/form-data field.
+    # 故意存在漏洞：该端点仅用于在 multipart/form-data 字段携带目标 URL 时复现 SSRF。
     url = request.form.get("url")
     content = command(f"curl {url}")
     return content
@@ -79,7 +78,7 @@ def ssrf6():
 # curl -X PUT -d 'url=test;http://example.com' http://127.0.0.1:5000/ssrf7
 @app.route("/ssrf7", methods=["PUT"])
 def ssrf7():
-    # The prefix represents application-specific syntax that must remain intact.
+    # 前缀代表必须保持完整的应用特有语法。
     value = request.form.get("url", "")
     _prefix, separator, url = value.partition(";")
     content = command(f"curl {url if separator else value}")
